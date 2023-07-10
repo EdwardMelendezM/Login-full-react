@@ -1,6 +1,14 @@
 import  {create} from 'zustand'
 
-export const intentosLogin = create((set)=>({
-  intentos:0,
-  reducirIntentos: (newIntento) => set({ intentos: newIntento })
-}))
+
+export const intentosLogin = create ((set, get) => ({
+  intentos: 4,
+  actualizarIntentos: () => {
+
+    const amountState = get().intentos
+
+    set({ intentos: amountState - 1 })
+    //is the same as:
+    // set(state => ({ amount: newAmount + state.amount  }))
+  },
+}));

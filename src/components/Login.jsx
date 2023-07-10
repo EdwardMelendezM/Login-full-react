@@ -1,6 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { intentosLogin } from "../hooks/intentos-login";
+
+import {toast} from 'react-hot-toast'
 
 const Login = () => {
+
+  const intentos = intentosLogin(state => state.intentos);
+  const reducirIntentos = intentosLogin(state => state.actualizarIntentos);
+
   const [formValues, setFormValues] = useState({
     email: '',
     pass: '',
@@ -17,7 +24,23 @@ const Login = () => {
     })
   }
 
-  const onSumit = (e) => {
+  const obtenerHoyMañana = () => {
+    const hoy = new Date();
+    const diaHoy = hoy.getDate();
+    const manana = new Date();
+    manana.setDate(diaHoy + 1);
+
+    return [hoy.getTime(), manana.getTime()];
+  }
+  const diferenciaDia=(mañana)=>{
+    const hoyDia = new Date()
+    const mañanaDia = new Date(mañana);
+    const diferenciaEnMilisegundos = Math.abs(mañanaDia.getTime() - hoyDia.getTime());
+    const diferenciaEnMinutos = Math.ceil(diferenciaEnMilisegundos / (1000 *60* 60));
+    return diferenciaEnMinutos;
+  }
+
+  const onSumit = useCallback((e) => {
     e.preventDefault();
     setFormValues({
       ...formValues,
@@ -51,15 +74,52 @@ const Login = () => {
         && formValues.pass.trim().length > 1
         && !formValues.error) {
         console.log("LOGIN VALIDO")
+        
+        if (intentos!==1){
+          toast.error(`No existe el usuario, tienes ${intentos-1} intentos!!`)
+        }
+        reducirIntentos()
+        
       }
     }, 2000)
 
-
-  }
+  }, [formValues, intentos,reducirIntentos])
 
   useEffect(() => {
-    // toast.succes('Tienes 3 intentos')
-  }, [])
+    const isBlockString = localStorage.getItem('isBlock');
+    
+    if (isBlockString && !formValues.loading){
+      const isBlock = JSON.parse(isBlockString);
+      const tiempoEspera = diferenciaDia(isBlock.diaManana)
+      if (tiempoEspera===0){
+        localStorage.removeItem('isBlock')
+        setFormValues({
+          ...formValues,
+          error: false,
+          loading: false
+        })
+      }
+      setFormValues({
+        ...formValues,
+        error: false,
+        loading: true
+      })
+      toast.error(`No tiene intentos, vuelva a probar en ${tiempoEspera} hrs`)
+    }
+    if (!isBlockString && intentos === 0 && !formValues.loading){
+      setFormValues({
+        ...formValues,
+        error: false,
+        loading: true
+      })
+      toast.error(`No tiene intentos, vuelva a probar en 24h`)
+      const [diaHoy, diaManana] = obtenerHoyMañana()
+      localStorage.setItem('isBlock', JSON.stringify({ isBlock: true, diaHoy: diaHoy, diaManana: diaManana }));
+      const userString = localStorage.getItem('isBlock');
+      const user = JSON.parse(userString);
+      console.log(user)
+    }
+  }, [intentos, formValues])
 
 
 
