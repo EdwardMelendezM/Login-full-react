@@ -1,0 +1,15 @@
+.container_img{
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.imagen{
+  margin: auto 5px;
+  height: 200px;
+  width: auto;
+}
+
+.not-allowed-cursor:hover {
+  cursor: move;
+}
